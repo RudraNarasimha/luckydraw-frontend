@@ -1,7 +1,7 @@
 import { Participant, Winner } from "../types";
 
-
 const API_URL = import.meta.env.VITE_API_BASE || "https://luckydraw-backend-qqq3.onrender.com";
+
 // Participants
 export async function fetchParticipants(): Promise<Participant[]> {
   const res = await fetch(`${API_URL}/participants`);
@@ -36,12 +36,18 @@ export async function fetchWinners(): Promise<Winner[]> {
   return res.json();
 }
 
-export async function addWinner(data: Omit<Winner, "id">): Promise<Winner> {
+export async function addWinner(data: { participantId: string; prize: string; year: string }): Promise<Winner> {
   const res = await fetch(`${API_URL}/winners`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || "Failed to add winner");
+  }
+
   return res.json();
 }
 
