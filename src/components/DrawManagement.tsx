@@ -5,8 +5,9 @@ import { Participant, Winner, PrizeRank } from '../types';
 interface Props {
   participants: Participant[];
   winners: Winner[];
-  onAddWinner: (winner: Omit<Winner, 'id'>) => void;
+  onAddWinner: (winnerData: { participantId: string; prize: string; year: string }) => Promise<Winner>;
 }
+
 
 export const DrawManagement: React.FC<Props> = ({
   participants,
@@ -50,41 +51,43 @@ export const DrawManagement: React.FC<Props> = ({
     setError('');
   };
 
-  const assignWinner = () => {
-    if (!selectedParticipant) {
-      setError('Please select a participant first');
-      return;
-    }
+  const assignWinner = async () => {
+  if (!selectedParticipant) {
+    setError('Please select a participant first');
+    return;
+  }
 
-    // Check if participant already won a prize in the selected year
-    const existingWinner = winners.find(w => 
-      w.participant.id === selectedParticipant.id && w.year === selectedYear
-    );
+  const existingWinner = winners.find(
+    (w) => w.participant.id === selectedParticipant.id && w.year === selectedYear
+  );
 
-    if (existingWinner) {
-      setError(`This participant has already won "${existingWinner.rank}" in ${selectedYear}`);
-      return;
-    }
+  if (existingWinner) {
+    setError(`This participant has already won "${existingWinner.prize}" in ${selectedYear}`);
+    return;
+  }
 
-    // Check if this rank is already assigned for the selected year
-    const rankTaken = winners.find(w => w.rank === selectedRank && w.year === selectedYear);
-    if (rankTaken && ['1st Prize', '2nd Prize', '3rd Prize'].includes(selectedRank)) {
-      setError(`${selectedRank} has already been assigned for ${selectedYear}`);
-      return;
-    }
+  const rankTaken = winners.find((w) => w.prize === selectedRank && w.year === selectedYear);
+  if (rankTaken && ['1st Prize', '2nd Prize', '3rd Prize'].includes(selectedRank)) {
+    setError(`${selectedRank} has already been assigned for ${selectedYear}`);
+    return;
+  }
 
-    const winner: Omit<Winner, 'id'> = {
-      participant: selectedParticipant,
-      rank: selectedRank,
-      year: selectedYear,
-      assignedAt: new Date().toISOString()
-    };
+  const winnerData = {
+    participantId: selectedParticipant.id,
+    prize: selectedRank,
+    year: selectedYear,
+  };
 
-    onAddWinner(winner);
+  try {
+    const newWinner = await onAddWinner(winnerData); // call API
     setSelectedParticipant(null);
     setTokenInput('');
     setError('');
-  };
+  } catch (err) {
+    setError('Failed to assign winner');
+  }
+};
+
 
   return (
     <div className="space-y-6">
@@ -212,7 +215,7 @@ export const DrawManagement: React.FC<Props> = ({
                     {winner.participant.name} ({winner.participant.tokenNo})
                   </p>
                   <p className="text-sm text-gray-600">
-                    {winner.rank} - {winner.year}
+                    {winner.prize} - {winner.year}
                   </p>
                 </div>
                 <div className="text-xs text-gray-500">
