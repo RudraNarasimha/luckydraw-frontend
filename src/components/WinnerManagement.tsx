@@ -17,7 +17,7 @@ export const WinnerManagement: React.FC<Props> = ({ winners, onDeleteWinner }) =
   const filteredWinners = winners.filter(w => w.year === selectedYear);
 
   const getWinnersByRank = (rank: string) => {
-    return filteredWinners.filter(w => w.rank === rank);
+    return filteredWinners.filter(w => w.prize === rank);
   };
 
   const handleExport = () => {
@@ -25,7 +25,7 @@ export const WinnerManagement: React.FC<Props> = ({ winners, onDeleteWinner }) =
       tokenNo: w.participant.tokenNo,
       name: w.participant.name,
       phone: w.participant.phone,
-      rank: w.rank,
+      rank: w.prize,
       year: w.year,
       assignedAt: new Date(w.assignedAt).toLocaleString()
     }));
